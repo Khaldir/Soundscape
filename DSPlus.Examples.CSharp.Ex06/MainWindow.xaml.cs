@@ -15,10 +15,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// --------
-//
-// This is a WPF example. It shows how to use WPF without deadlocks.
 
 using System;
 using System.Collections.ObjectModel;
@@ -535,7 +531,7 @@ namespace DSPlus.Examples
         private Task Bot_Ready(ReadyEventArgs e)
         {
             // set the window title to indicate we are connected
-            this.SetProperty(xf => xf.WindowTitle, "Example WPF Bot (connected)");
+            this.SetProperty(xf => xf.WindowTitle, "Soundscape (connected)");
             return Task.CompletedTask;
         }
 
