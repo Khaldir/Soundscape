@@ -215,7 +215,7 @@ namespace DSPlus.Examples
         public ObservableCollection<AudioSource> SoundEffects { get; }
 
         bool AudioRepeat = true;
-        bool SoundEffectRepeat = false;
+        bool SoundEffectRepeat = true;
         bool AudioPlaylist = true;
         bool AudioNotPaused = true;
         bool IsAudioPlaying = false;
@@ -455,7 +455,7 @@ namespace DSPlus.Examples
 
         public async Task BotPlayAudio(VoiceNextConnection vnc)
         {
-            
+            bool keepLooping = (IsAudioPlaying || IsSEPlaying);
             await vnc.SendSpeakingAsync(true);
             do
             {
@@ -501,27 +501,47 @@ namespace DSPlus.Examples
 
                 await vnc.SendAsync(output, 20);
                 this.OnPropertyChanged(nameof(this.SelectedAudio));
-                if(this.SelectedAudio.AudioStream.Position == this.SelectedAudio.AudioStream.Length)
+                this.OnPropertyChanged(nameof(this.SelectedSoundEffect));
+                if(this.SelectedAudio.AudioStream != null)
                 {
-                    int AudioIndex = AudioSources.IndexOf(SelectedAudio);
-                    //Set current song to start again
-                    if (AudioRepeat)
-                        this.SelectedAudio.AudioStream.Seek(0, SeekOrigin.Begin);
-                    //Queue next song
-                    if (AudioPlaylist)
+                    if (this.SelectedAudio.AudioStream.Position == this.SelectedAudio.AudioStream.Length)
                     {
-                        AudioIndex++;
-                        if (AudioIndex >= AudioSources.Count)
-                            AudioIndex = 0;
+                        int AudioIndex = AudioSources.IndexOf(SelectedAudio);
+                        //Set current song to start again
+                        if (AudioRepeat)
+                            this.SelectedAudio.AudioStream.Seek(0, SeekOrigin.Begin);
+                        //Queue next song
+                        if (AudioPlaylist)
+                        {
+                            AudioIndex++;
+                            if (AudioIndex >= AudioSources.Count)
+                                AudioIndex = 0;
+                        }
+                        if (AudioRepeat)
+                            SelectedAudio = AudioSources.ElementAt(AudioIndex);
+                        else
+                            IsAudioPlaying = false;
                     }
-                    if (AudioRepeat)
-                        SelectedAudio = AudioSources.ElementAt(AudioIndex);
-                    else
-                        IsAudioPlaying = false;
                 }
-                
-                
-            } while (IsAudioPlaying || IsSEPlaying);
+                if(this.SelectedSoundEffect.AudioStream != null)
+                {
+                    if (this.SelectedSoundEffect.AudioStream.Position == this.SelectedSoundEffect.AudioStream.Length)
+                    {
+                        int AudioIndex = AudioSources.IndexOf(SelectedSoundEffect);
+                        //Set current song to start again
+                        if (SoundEffectRepeat)
+                        {
+                            this.SelectedSoundEffect.AudioStream.Seek(0, SeekOrigin.Begin);
+                            SelectedSoundEffect = AudioSources.ElementAt(AudioIndex);
+                        }
+                        else
+                            IsSEPlaying = false;
+                    }
+                }
+               
+
+                keepLooping = (IsAudioPlaying || IsSEPlaying);
+            } while (keepLooping);
             await vnc.SendSpeakingAsync(false);
             
             
@@ -666,6 +686,7 @@ namespace DSPlus.Examples
             if (this.SelectedAudio.AudioStream == null)
                 return;
             IsAudioPlaying = true;
+            SelectedAudio.AudioStream.Seek(0, SeekOrigin.Begin);
             //Get VoiceNext Client
             var vnext = this.Bot.Client.GetVoiceNextClient();
             //Check bot is actually connected
@@ -683,6 +704,7 @@ namespace DSPlus.Examples
             if (this.SelectedSoundEffect.AudioStream == null)
                 return;
             IsSEPlaying = true;
+            SelectedSoundEffect.AudioStream.Seek(0, SeekOrigin.Begin);
             //Get VoiceNext Client
             var vnext = this.Bot.Client.GetVoiceNextClient();
             //Check bot is actually connected
