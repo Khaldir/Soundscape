@@ -42,6 +42,9 @@ namespace DSPlus.Examples
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged // INotifyPropertyChanged is for easy UI updates
     {
+        public Task AudioTask;
+        public CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        public CancellationToken ct;
 
         // this property controls the title of this window
         public string WindowTitle
@@ -179,9 +182,13 @@ namespace DSPlus.Examples
             get => this._selected_audio;
             set
             {
+                
+                //this.SelectedAudio.ClearAudio();
+                //AudioIsLoaded = false;
                 this._selected_audio = value;
 
                 Debug.WriteLine(this._selected_audio.Name);
+
 
                 this.OnPropertyChanged(nameof(this.SelectedAudio));
             }
@@ -217,9 +224,11 @@ namespace DSPlus.Examples
         bool AudioRepeat = true;
         bool SoundEffectRepeat = true;
         bool AudioPlaylist = true;
-        bool AudioNotPaused = true;
+        bool AudioWasPaused = false;
         bool IsAudioPlaying = false;
+        bool ChangedByCode = false;
         bool IsSEPlaying = false;
+        bool AudioIsLoaded = false;
 
         public MainWindow()
         {
@@ -236,6 +245,7 @@ namespace DSPlus.Examples
             this.AudioSources = new ObservableCollection<AudioSource>();        // initialise the audio collection
             this.SoundEffects = new ObservableCollection<AudioSource>();        // initialise the sound effect collection
 
+            ct = cancellationTokenSource.Token;
 
             GetAudioFiles("Music",true);
             GetAudioFiles("Sounds", false);
@@ -457,14 +467,30 @@ namespace DSPlus.Examples
         {
             bool keepLooping = (IsAudioPlaying || IsSEPlaying);
             await vnc.SendSpeakingAsync(true);
+            if (!AudioIsLoaded)
+            {
+                this.SelectedAudio.ImportAudio();
+                AudioIsLoaded = true;
+                cancellationTokenSource = new CancellationTokenSource();
+                ct = cancellationTokenSource.Token;
+            }
             do
             {
+                if (ct.IsCancellationRequested)
+                {
+                    this.SelectedAudio.ClearAudio();
+                    AudioIsLoaded = false;
+                    ct.ThrowIfCancellationRequested();
+                }
                 var audioBuff = new byte[3840];
                 var seBuff = new byte[3840];
                 var output = new byte[3840];
+                
                 // Get Audio Sample
                 if (IsAudioPlaying)
                 {
+                    
+
                     var br = 0;
                     
                     br = await this.SelectedAudio.AudioStream.ReadAsync(audioBuff, 0, audioBuff.Length);
@@ -496,31 +522,58 @@ namespace DSPlus.Examples
                     output = AudioSource.MergeAudioSample(audioBuff, seBuff);
                 }
 
-                
+                if (ct.IsCancellationRequested)
+                {
+                    this.SelectedAudio.ClearAudio();
+                    AudioIsLoaded = false;
+                    ct.ThrowIfCancellationRequested();
+                }
 
 
                 await vnc.SendAsync(output, 20);
                 this.OnPropertyChanged(nameof(this.SelectedAudio));
                 this.OnPropertyChanged(nameof(this.SelectedSoundEffect));
-                if(this.SelectedAudio.AudioStream != null)
+                if(this.SelectedAudio.AudioStream != null && !ct.IsCancellationRequested)
                 {
                     if (this.SelectedAudio.AudioStream.Position == this.SelectedAudio.AudioStream.Length)
                     {
                         int AudioIndex = AudioSources.IndexOf(SelectedAudio);
                         //Set current song to start again
-                        if (AudioRepeat)
+                        if (AudioRepeat && !AudioPlaylist && !ct.IsCancellationRequested)
                             this.SelectedAudio.AudioStream.Seek(0, SeekOrigin.Begin);
                         //Queue next song
-                        if (AudioPlaylist)
+                        else if (AudioRepeat && AudioPlaylist && !ct.IsCancellationRequested)
                         {
+                            this.SelectedAudio.ClearAudio();
                             AudioIndex++;
                             if (AudioIndex >= AudioSources.Count)
                                 AudioIndex = 0;
-                        }
-                        if (AudioRepeat)
+                            ChangedByCode = true;
                             SelectedAudio = AudioSources.ElementAt(AudioIndex);
+                            SelectedAudio.ImportAudio();
+                            AudioIsLoaded = true;
+                        }
+                        else if (!AudioRepeat && AudioPlaylist && !ct.IsCancellationRequested)
+                        {
+                            this.SelectedAudio.ClearAudio();
+                            AudioIndex++;
+                            if (AudioIndex >= AudioSources.Count)
+                                IsAudioPlaying = false;
+                            else
+                            {
+                                ChangedByCode = true;
+                                SelectedAudio = AudioSources.ElementAt(AudioIndex);
+                                SelectedAudio.ImportAudio();
+                                AudioIsLoaded = true;
+                            }
+                        }
                         else
+                        {
+                            this.SelectedAudio.ClearAudio();
+                            AudioIsLoaded = false;
                             IsAudioPlaying = false;
+                        }
+                            
                     }
                 }
                 if(this.SelectedSoundEffect.AudioStream != null)
@@ -540,10 +593,9 @@ namespace DSPlus.Examples
                 }
                
 
-                keepLooping = (IsAudioPlaying || IsSEPlaying);
+                keepLooping = (IsAudioPlaying || IsSEPlaying || AudioWasPaused );
             } while (keepLooping);
             await vnc.SendSpeakingAsync(false);
-            
             
         }
 
@@ -681,10 +733,21 @@ namespace DSPlus.Examples
 
         private void AudioSelected(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
+            if (ChangedByCode)
+            {
+                ChangedByCode = false;
+                return;
+
+            }
             // check if we have a channel selected, if not, do 
             // nothing
             if (this.SelectedAudio.AudioStream == null)
                 return;
+
+            if(IsAudioPlaying)
+                cancellationTokenSource.Cancel();
+
+            AudioIsLoaded = false;
             IsAudioPlaying = true;
             SelectedAudio.AudioStream.Seek(0, SeekOrigin.Begin);
             //Get VoiceNext Client
@@ -694,7 +757,7 @@ namespace DSPlus.Examples
             if (vnc == null)
                 throw new InvalidOperationException("No connection to disconnect in this Guild");
             
-            _ = Task.Run(() => this.BotPlayAudio(vnc));
+            AudioTask = Task.Run(() => this.BotPlayAudio(vnc));
         }
 
         private void SESelected(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -712,7 +775,7 @@ namespace DSPlus.Examples
             if (vnc == null)
                 throw new InvalidOperationException("No connection to disconnect in this Guild");
 
-            _ = Task.Run(() => this.BotPlayAudio(vnc));
+            AudioTask = Task.Run(() => this.BotPlayAudio(vnc));
         }
 
         private void AudioFolderSelect(object sender, RoutedEventArgs e)
@@ -755,19 +818,13 @@ namespace DSPlus.Examples
         private void Seekbar_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
         {
             IsAudioPlaying = false;
+            AudioWasPaused = true;
         }
 
         private void Seekbar_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
         {
             IsAudioPlaying = true;
-            //Get VoiceNext Client
-            var vnext = this.Bot.Client.GetVoiceNextClient();
-            //Check bot is actually connected
-            var vnc = vnext.GetConnection(this.SelectedGuild.Guild);
-            if (vnc == null)
-                throw new InvalidOperationException("No connection to disconnect in this Guild");
-
-            _ = Task.Run(() => this.BotPlayAudio(vnc));
+            AudioWasPaused = false;
         }
     }
 }

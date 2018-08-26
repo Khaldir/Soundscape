@@ -129,7 +129,6 @@ namespace DSPlus.Examples
 
         public static byte[] MergeAudioSample(byte[] sampleA, byte[] sampleB)
         {
-            
             if (sampleA.Length == sampleB.Length)
             {
                 byte[] output = new byte[sampleA.Length];
@@ -143,6 +142,8 @@ namespace DSPlus.Examples
             }
             return null;
         }
+
+        public bool IsLoaded;
 
         public string Filepath;
         public string Name
@@ -181,42 +182,15 @@ namespace DSPlus.Examples
 
         public MemoryStream AudioStream;
 
-        public static void ImportAudio(string filepathIn, string nameIn)
+        public void ImportAudio()
         {
-            FileStream fs = File.Create(nameIn + ".SCA");
-            var psi = new ProcessStartInfo
-            {
-                FileName = "ffmpeg",
-                Arguments = $@"-i ""{filepathIn}"" -ac 2 -f s16le -ar 48000 pipe:1",
-                RedirectStandardOutput = true,
-                UseShellExecute = false
-            };
-            var ffmpeg = Process.Start(psi);
-            var ffout = ffmpeg.StandardOutput.BaseStream;
-            
-            var buff = new byte[3840];
-            var br = 0;
-            while ((br = ffout.Read(buff, 0, buff.Length)) > 0)
-            {
-                if (br < buff.Length) // not a full sample, mute the rest
-                    for (var i = br; i < buff.Length; i++)
-                        buff[i] = 0;
-                fs.Write(buff, 0, buff.Length);
-            }
-        }
-
-        public AudioSource(string filepathIn)
-        {
-            
-            this.AudioStream = new MemoryStream();
-            this.Filepath = filepathIn;
             var psi = new ProcessStartInfo
             {
                 FileName = "ffmpeg",
                 Arguments = $@"-i ""{this.Filepath}"" -ac 2 -f s16le -ar 48000 pipe:1",
                 RedirectStandardOutput = true,
                 UseShellExecute = false
-                
+
             };
             var ffmpeg = Process.Start(psi);
             var ffout = ffmpeg.StandardOutput.BaseStream;
@@ -227,7 +201,7 @@ namespace DSPlus.Examples
             var br = 0;
             while ((br = ffout.Read(buff, 0, buff.Length)) > 0)
             {
-                AudioStream.Write(buff, 0, br);
+                this.AudioStream.Write(buff, 0, br);
                 if (br < buff.Length) // not a full sample, mute the rest
                     for (var i = br; i < buff.Length; i++)
                         buff[i] = 0;
@@ -235,6 +209,21 @@ namespace DSPlus.Examples
 
             }
             AudioStream.Seek(0, SeekOrigin.Begin);
+            IsLoaded = true;
+        }
+
+        public void ClearAudio()
+        {
+            this.IsLoaded = false;
+            this.AudioStream = new MemoryStream();
+        }
+
+        public AudioSource(string filepathIn)
+        {
+            
+            this.AudioStream = new MemoryStream();
+            this.Filepath = filepathIn;
+            this.IsLoaded = false;
         }
 
         public override string ToString()
