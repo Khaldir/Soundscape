@@ -234,6 +234,9 @@ namespace DSPlus.Examples
         bool AudioIsLoaded = false;
         bool SEIsLoaded = false;
 
+        bool FadeOutMusic = false;
+        bool FadeOutSE = false;
+
         int LastTrackIndex = -1;
 
         public double MusicVolume
@@ -499,6 +502,10 @@ namespace DSPlus.Examples
         public async Task BotPlayAudio(VoiceNextConnection vnc)
         {
             bool keepLooping = (IsAudioPlaying || IsSEPlaying);
+
+            double MusicVolumeModifier = 1.0;
+            double SoundEffectVolumeModifier = 1.0;
+
             await vnc.SendSpeakingAsync(true);
             if (!AudioIsLoaded || !SEIsLoaded)
             {
@@ -518,6 +525,28 @@ namespace DSPlus.Examples
             }
             do
             {
+                if(FadeOutMusic)
+                {
+                    MusicVolumeModifier = MusicVolumeModifier - 0.005;
+                    if (MusicVolumeModifier <= 0)
+                    {
+                        IsAudioPlaying = false;
+                        SelectedAudio.ClearAudio();
+                        MusicVolumeModifier = 1.0;
+                        FadeOutMusic = false;
+                    }
+                }
+                if (FadeOutSE)
+                {
+                    SoundEffectVolumeModifier = SoundEffectVolumeModifier - 0.005;
+                    if (SoundEffectVolumeModifier <= 0)
+                    {
+                        IsSEPlaying = false;
+                        SelectedSoundEffect.ClearAudio();
+                        SoundEffectVolumeModifier = 1.0;
+                        FadeOutSE = false;
+                    }
+                }
                 if (ct.IsCancellationRequested)
                 {
                     this.SelectedAudio.ClearAudio();
@@ -540,7 +569,7 @@ namespace DSPlus.Examples
                             audioBuff[i] = 0;
                     if(!IsSEPlaying)
                     {
-                        output = AudioSource.ApplyVolume(audioBuff,MusicVolume);
+                        output = AudioSource.ApplyVolume(audioBuff,MusicVolume*MusicVolumeModifier);
                     }
                 }
                 // Get Sound Effect Sample
@@ -554,13 +583,13 @@ namespace DSPlus.Examples
                             seBuff[i] = 0;
                     if (!IsAudioPlaying)
                     {
-                        output = AudioSource.ApplyVolume(seBuff,SEVolume);
+                        output = AudioSource.ApplyVolume(seBuff,SEVolume*SoundEffectVolumeModifier);
                     }
                 }
                 // Combine both samples
                 if (IsAudioPlaying && IsSEPlaying)
                 {
-                    output = AudioSource.MergeAudioSample(audioBuff, MusicVolume, seBuff, SEVolume);
+                    output = AudioSource.MergeAudioSample(audioBuff, MusicVolume*MusicVolumeModifier, seBuff, SEVolume*SoundEffectVolumeModifier);
                 }
 
                 if (ct.IsCancellationRequested)
@@ -956,6 +985,16 @@ namespace DSPlus.Examples
             else
                 strMins = mins.ToString();
             TotalTime.Content = strMins + ":" + strSecs;
+        }
+
+        private void FadeMusicOut(object sender, RoutedEventArgs e)
+        {
+            FadeOutMusic = true;
+        }
+
+        private void FadeSEOut(object sender, RoutedEventArgs e)
+        {
+            FadeOutSE = true;
         }
     }
 }

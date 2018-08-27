@@ -127,12 +127,14 @@
                 <Label Grid.Column="2" x:Name="TotalTime" Content="XX:XX" Width="42" VerticalAlignment="Center" />
             </Grid>
             <Button x:Name="PauseButton" Width="20" Content="⏸️" Height="20" FontFamily="Times New Roman" Margin="366,0" Click="PausePlayClick" />
+            
         </StackPanel>
         <GroupBox x:Name="AudioControls" Grid.Row="1" Grid.RowSpan="3" Grid.Column="2" Header="Audio Controls">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -153,6 +155,7 @@
                 <CheckBox x:Name="PlaylistCheck" Grid.Row="2" Content="Play List" Margin="5,5,5,0" Click="PlaylistClicked" IsChecked="True"/>
                 <CheckBox x:Name="RepeatCheck" Grid.Row="3" Content="Repeat" IsChecked="True" Margin="5" Click="RepeatClicked"/>
                 <Slider x:Name="MusicVolumeSlider" Grid.Row="4"  Value="{Binding ElementName=Self,Path=MusicVolume}" Maximum="1" LargeChange="0.1" SmallChange="0.05" TickFrequency="0.05"/>
+                <Button x:Name="FadeOutButton" Grid.Row="5" Content="Fade Out" Click="FadeMusicOut" Margin="0,5"/>
             </Grid>
         </GroupBox>
         <GroupBox Grid.Row="1" Grid.RowSpan="3" Grid.Column="1" Header="Chat">
@@ -205,6 +208,7 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -221,6 +225,7 @@
                 </ListView>
                 <CheckBox x:Name="SERepeatCheck" Grid.Row="2" Content="Repeat" IsChecked="True" Margin="5" Click="SERepeatClicked"/>
                 <Slider x:Name="SEVolumeSlider" Grid.Row="3"  Value="{Binding ElementName=Self,Path=SEVolume}" Maximum="1" LargeChange="0.1" SmallChange="0.05" TickFrequency="0.05"/>
+                <Button x:Name="FadeSEButton" Grid.Row="4" Content="Fade Out"  Margin="0,5" Click="FadeSEOut"/>
             </Grid>
         </GroupBox>
     </Grid>
