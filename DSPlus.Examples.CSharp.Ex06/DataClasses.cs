@@ -127,20 +127,33 @@ namespace DSPlus.Examples
     public struct AudioSource
     {
 
-        public static byte[] MergeAudioSample(byte[] sampleA, byte[] sampleB)
+        public static byte[] MergeAudioSample(byte[] sampleA, double volumeA, byte[] sampleB, double volumeB)
         {
             if (sampleA.Length == sampleB.Length)
             {
                 byte[] output = new byte[sampleA.Length];
                 for (int i = 0; i < sampleA.Length; i = i + 2)
                 {
-                    byte[] bytePair = BitConverter.GetBytes((short)(BitConverter.ToInt16(sampleA, i) + BitConverter.ToInt16(sampleB, i) / (short)2));
+                    byte[] bytePair = BitConverter.GetBytes((short)((BitConverter.ToInt16(sampleA, i)*volumeA) + (BitConverter.ToInt16(sampleB, i)*volumeB) / (short)2));
                     output[i] = bytePair[0];
                     output[i + 1] = bytePair[1];
                 }
                 return output;
             }
             return null;
+        }
+
+        public static byte[] ApplyVolume(byte[] sampleA, double volumeA)
+        {
+            byte[] output = new byte[sampleA.Length];
+            for (int i = 0; i < sampleA.Length; i = i + 2)
+            {
+                byte[] bytePair = BitConverter.GetBytes((short)((BitConverter.ToInt16(sampleA, i) * volumeA)));
+                output[i] = bytePair[0];
+                output[i + 1] = bytePair[1];
+            }
+            return output;
+            
         }
 
         public bool IsLoaded;

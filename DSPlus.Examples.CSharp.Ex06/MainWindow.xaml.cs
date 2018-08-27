@@ -234,6 +234,30 @@ namespace DSPlus.Examples
         bool AudioIsLoaded = false;
         bool SEIsLoaded = false;
 
+        int LastTrackIndex = -1;
+
+        public double MusicVolume
+        {
+            get { return this._music_volume; }
+            set
+            {
+                this._music_volume = value;
+                this.OnPropertyChanged(nameof(this.MusicVolume));
+            }
+        }
+        private double _music_volume;
+
+        public double SEVolume
+        {
+            get { return this._se_volume; }
+            set
+            {
+                this._se_volume = value;
+                this.OnPropertyChanged(nameof(this.SEVolume));
+            }
+        }
+        private double _se_volume;
+
         public MainWindow()
         {
             this._window_title = "Soundscape";      // set the initial title
@@ -249,6 +273,9 @@ namespace DSPlus.Examples
             this.AudioSources = new ObservableCollection<AudioSource>();        // initialise the audio collection
             this.SoundEffects = new ObservableCollection<AudioSource>();        // initialise the sound effect collection
 
+            this.MusicVolume = 1.0;
+            this.SEVolume = 1.0;
+
             ct = cancellationTokenSource.Token;
 
             GetAudioFiles("Music",true);
@@ -261,8 +288,10 @@ namespace DSPlus.Examples
         
         private void GetAudioFiles(string filepath, bool IsMusic)
         {
+            
             if (IsMusic)
             {
+                LastTrackIndex = -1;
                 this.AudioSources.Clear();
                 string[] audiofiles = Directory.GetFiles(filepath);
                 foreach (string file in audiofiles)
@@ -511,7 +540,7 @@ namespace DSPlus.Examples
                             audioBuff[i] = 0;
                     if(!IsSEPlaying)
                     {
-                        output = audioBuff;
+                        output = AudioSource.ApplyVolume(audioBuff,MusicVolume);
                     }
                 }
                 // Get Sound Effect Sample
@@ -525,13 +554,13 @@ namespace DSPlus.Examples
                             seBuff[i] = 0;
                     if (!IsAudioPlaying)
                     {
-                        output = seBuff;
+                        output = AudioSource.ApplyVolume(seBuff,SEVolume);
                     }
                 }
                 // Combine both samples
                 if (IsAudioPlaying && IsSEPlaying)
                 {
-                    output = AudioSource.MergeAudioSample(audioBuff, seBuff);
+                    output = AudioSource.MergeAudioSample(audioBuff, MusicVolume, seBuff, SEVolume);
                 }
 
                 if (ct.IsCancellationRequested)
@@ -756,6 +785,12 @@ namespace DSPlus.Examples
                 ChangedByCode = false;
                 return;
             }
+            else
+            {
+                if (LastTrackIndex != -1)
+                    this.AudioSources.ElementAt(LastTrackIndex).ClearAudio();
+            }
+            LastTrackIndex = AudioSources.IndexOf(SelectedAudio);
             // check if we have a channel selected, if not, do 
             // nothing
             if (this.SelectedAudio.AudioStream == null)
