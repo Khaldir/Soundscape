@@ -859,14 +859,68 @@ namespace DSPlus.Examples
 
         private void Seekbar_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
         {
-            IsAudioPlaying = false;
-            AudioWasPaused = true;
+            if(!AudioWasPaused)
+            {
+                IsAudioPlaying = false;
+                AudioWasPaused = true;
+            }
+            
         }
 
         private void Seekbar_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
         {
-            IsAudioPlaying = true;
-            AudioWasPaused = false;
+            if((string)PauseButton.Content != "▶️")
+            {
+                IsAudioPlaying = true;
+                AudioWasPaused = false;
+            }
+            
+        }
+
+        private void PausePlayClick(object sender, RoutedEventArgs e)
+        {
+            if(AudioWasPaused)
+            {
+                PauseButton.Content = "⏸️";
+                IsAudioPlaying = true;
+                AudioWasPaused = false;
+            }
+            else
+            {
+                PauseButton.Content = "▶️";
+                AudioWasPaused = true;
+                IsAudioPlaying = false;
+            }
+        }
+
+        private void MusicProgressChange(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            string strSecs;
+            string strMins;
+            double Current = (SelectedAudio.AudioPosition / (48000 * 4));
+            int mins = (int)Math.Floor(Current / 60.0);
+            int secs = (int)(Current % 60);
+            if (secs < 10)
+                strSecs = "0" + secs.ToString(); 
+            else
+                strSecs = secs.ToString();
+            if (mins< 10)
+                strMins = "0" + mins.ToString();
+            else
+                strMins = mins.ToString();
+            CurrentTime.Content = strMins + ":" + strSecs;
+            Current = (SelectedAudio.AudioLength / (48000 * 4));
+            mins = (int)Math.Floor(Current / 60.0);
+            secs = (int)(Current % 60);
+            if (secs < 10)
+                strSecs = "0" + secs.ToString();
+            else
+                strSecs = secs.ToString();
+            if (mins < 10)
+                strMins = "0" + mins.ToString();
+            else
+                strMins = mins.ToString();
+            TotalTime.Content = strMins + ":" + strSecs;
         }
     }
 }

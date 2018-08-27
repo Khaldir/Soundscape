@@ -36,7 +36,8 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="*" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="48" />
+            <RowDefinition Height="72
+                           " />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*" />
@@ -114,10 +115,19 @@
                 </ListView.ItemTemplate>
             </ListView>
         </GroupBox>
-        <GroupBox x:Name="Audio" Grid.Row="4" Grid.ColumnSpan="4">
-
-            <Slider x:Name="AudioProgress" VerticalAlignment="Center" Value="{Binding ElementName=Self,Path=SelectedAudio.AudioPosition, Mode=TwoWay}" Maximum="{Binding ElementName=Self,Path=SelectedAudio.AudioLength, Mode=OneWay}" TickPlacement="Both" Margin="10,6" Thumb.DragStarted="Seekbar_DragStarted" Thumb.DragCompleted="Seekbar_DragCompleted" SmallChange="1" AutoToolTipPlacement="TopLeft"/>
-        </GroupBox>
+        <StackPanel x:Name="Audio" Grid.Row="4" Grid.ColumnSpan="4">
+            <Grid x:Name="SeekBarHolder">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="50"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="50"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Label Grid.Column="0"  x:Name="CurrentTime" Content="XX:XX" Width="42" VerticalAlignment="Center" />
+                <Slider Grid.Column="1" x:Name="AudioProgress" VerticalAlignment="Top" Value="{Binding ElementName=Self,Path=SelectedAudio.AudioPosition, Mode=TwoWay}" Maximum="{Binding ElementName=Self,Path=SelectedAudio.AudioLength, Mode=OneWay}" TickPlacement="Both" Margin="10,6" Thumb.DragStarted="Seekbar_DragStarted" Thumb.DragCompleted="Seekbar_DragCompleted" SmallChange="1" AutoToolTipPlacement="TopLeft" ValueChanged="MusicProgressChange"/>
+                <Label Grid.Column="2" x:Name="TotalTime" Content="XX:XX" Width="42" VerticalAlignment="Center" />
+            </Grid>
+            <Button x:Name="PauseButton" Width="20" Content="⏸️" Height="20" FontFamily="Times New Roman" Margin="366,0" Click="PausePlayClick" />
+        </StackPanel>
         <GroupBox x:Name="AudioControls" Grid.Row="1" Grid.RowSpan="3" Grid.Column="2" Header="Audio Controls">
             <Grid>
                 <Grid.RowDefinitions>
