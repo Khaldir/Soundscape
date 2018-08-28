@@ -197,6 +197,7 @@ namespace DSPlus.Examples
 
         public void ImportAudio()
         {
+            AudioStream.Seek(0, SeekOrigin.Begin);
             var psi = new ProcessStartInfo
             {
                 FileName = "ffmpeg",

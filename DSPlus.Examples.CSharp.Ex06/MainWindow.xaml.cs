@@ -294,8 +294,14 @@ namespace DSPlus.Examples
             
             if (IsMusic)
             {
-                LastTrackIndex = -1;
+                if(LastTrackIndex != -1)
+                {
+                    ChangedByCode = true;
+                    LastTrackIndex = -1;
+                }
+                   
                 this.AudioSources.Clear();
+                
                 string[] audiofiles = Directory.GetFiles(filepath);
                 foreach (string file in audiofiles)
                 {
