@@ -589,7 +589,7 @@ namespace DSPlus.Examples
                             seBuff[i] = 0;
                     if (!IsAudioPlaying)
                     {
-                        output = AudioSource.ApplyVolume(seBuff,SEVolume*SoundEffectVolumeModifier);
+                        output = AudioSource.ApplyVolume(seBuff,SEVolume*SoundEffectVolumeModifier*0.5);
                     }
                 }
                 // Combine both samples
@@ -628,9 +628,12 @@ namespace DSPlus.Examples
                             if (AudioIndex >= AudioSources.Count)
                                 AudioIndex = 0;
                             ChangedByCode = true;
+                            IsAudioPlaying = false;
+                            AudioIsLoaded = false;
                             SelectedAudio = AudioSources.ElementAt(AudioIndex);
-                            SelectedAudio.ImportAudio();
-                            AudioIsLoaded = true;
+                            
+                            //SelectedAudio.ImportAudio();
+                            //AudioIsLoaded = true;
                         }
                         else if (!AudioRepeat && AudioPlaylist && !ct.IsCancellationRequested)
                         {
@@ -641,9 +644,11 @@ namespace DSPlus.Examples
                             else
                             {
                                 ChangedByCode = true;
+                                IsAudioPlaying = false;
+                                AudioIsLoaded = false;
                                 SelectedAudio = AudioSources.ElementAt(AudioIndex);
-                                SelectedAudio.ImportAudio();
-                                AudioIsLoaded = true;
+                                //SelectedAudio.ImportAudio();
+                                //AudioIsLoaded = true;
                             }
                         }
                         else
@@ -815,12 +820,7 @@ namespace DSPlus.Examples
 
         private void AudioSelected(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            if (ChangedByCode)
-            {
-                ChangedByCode = false;
-                return;
-            }
-            else
+            if (!ChangedByCode)
             {
                 if (LastTrackIndex != -1)
                     this.AudioSources.ElementAt(LastTrackIndex).ClearAudio();
