@@ -627,13 +627,9 @@ namespace DSPlus.Examples
                             AudioIndex++;
                             if (AudioIndex >= AudioSources.Count)
                                 AudioIndex = 0;
-                            ChangedByCode = true;
                             IsAudioPlaying = false;
                             AudioIsLoaded = false;
                             SelectedAudio = AudioSources.ElementAt(AudioIndex);
-                            
-                            //SelectedAudio.ImportAudio();
-                            //AudioIsLoaded = true;
                         }
                         else if (!AudioRepeat && AudioPlaylist && !ct.IsCancellationRequested)
                         {
@@ -643,12 +639,9 @@ namespace DSPlus.Examples
                                 IsAudioPlaying = false;
                             else
                             {
-                                ChangedByCode = true;
                                 IsAudioPlaying = false;
                                 AudioIsLoaded = false;
                                 SelectedAudio = AudioSources.ElementAt(AudioIndex);
-                                //SelectedAudio.ImportAudio();
-                                //AudioIsLoaded = true;
                             }
                         }
                         else
@@ -820,7 +813,12 @@ namespace DSPlus.Examples
 
         private void AudioSelected(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            if (!ChangedByCode)
+            if (ChangedByCode)
+            {
+                ChangedByCode = false;
+                return;
+            }
+            else
             {
                 if (LastTrackIndex != -1)
                     this.AudioSources.ElementAt(LastTrackIndex).ClearAudio();
